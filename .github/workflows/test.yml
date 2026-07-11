@@ -32,7 +32,7 @@ jobs:
       - name: Move and rename APK
         run: |
           mkdir -p out
-          cp app/build/outputs/apk/debug/*.apk out/MEPlayer-tv-debug.apk
+          cp app/build/outputs/apk/debug/*.apk out/MEPlayer-android-tv-debug.apk
 
       # 用固定 tag "test" 发布/更新一个 prerelease，每次手动运行都会覆盖它
       - name: Publish prerelease
@@ -42,4 +42,4 @@ jobs:
           name: MEPlayer test
           prerelease: true
           make_latest: false
-          files: out/MEPlayer-tv-debug.apk
+          files: out/MEPlayer-android-tv-debug.apk
