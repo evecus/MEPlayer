@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FlutterPlayerKotlin"
+rootProject.name = "MEPlayerTV"
 include(":app")
