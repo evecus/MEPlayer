@@ -47,4 +47,4 @@ jobs:
           name: MEPlayer test
           prerelease: true
           make_latest: false
-          files: out/MEPlayer-debug.apk
+          files: out/MEPlayer-tv-debug.apk
