@@ -1,4 +1,4 @@
-name: test
+name: test-mobile
 
 on:
   workflow_dispatch:
