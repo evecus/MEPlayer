@@ -32,7 +32,7 @@ jobs:
       - name: Move and rename APK
         run: |
           mkdir -p out
-          cp app/build/outputs/apk/debug/*.apk out/MEPlayer-debug.apk
+          cp app/build/outputs/apk/debug/*.apk out/MEPlayer-mobile-debug.apk
 
       - name: Move tag "test" to current commit
         run: |
@@ -47,4 +47,4 @@ jobs:
           name: MEPlayer test
           prerelease: true
           make_latest: false
-          files: out/MEPlayer-debug.apk
+          files: out/MEPlayer-*.apk
