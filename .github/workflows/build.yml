@@ -1,4 +1,4 @@
-name: build-moile
+name: build-mobile
 
 on:
   workflow_dispatch:
