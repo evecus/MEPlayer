@@ -34,11 +34,6 @@ jobs:
           mkdir -p out
           cp app/build/outputs/apk/debug/*.apk out/MEPlayer-tv-debug.apk
 
-      - name: Move tag "test" to current commit
-        run: |
-          git tag -f test
-          git push origin test --force
-
       # 用固定 tag "test" 发布/更新一个 prerelease，每次手动运行都会覆盖它
       - name: Publish prerelease
         uses: softprops/action-gh-release@v2
