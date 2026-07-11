@@ -1,4 +1,4 @@
-name: build
+name: build-moile
 
 on:
   workflow_dispatch:
