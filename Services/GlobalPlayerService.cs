@@ -304,7 +304,9 @@ public sealed class GlobalPlayerService : INotifyPropertyChanged, IDisposable
     // 也是一个独立的 MpvPlayer 实例），此前两边写日志都不带来源标识，导致排查视频播放
     // 页"进度条不走"问题时，误把这里打印的、后台音乐播放器（可能处于暂停状态）的
     // PositionChanged 日志当成了视频播放器卡住的证据。加上 [global] 前缀，
-    // 和 MpvPlayer 内部按实例编号打的 [mpv#N] 前缀区分开。
+    // 和 MpvPlayer 内部按实例编号打的 [mpv#N] 前缀区分开。同时复用 MpvPlayer 里
+    // 跨实例共享的静态锁，避免和其它 MpvPlayer 实例的日志线程并发写同一个文件时
+    // 互相抛 IOException 导致日志静默丢行。
     private static void WriteGlobalLog(string line)
     {
         try
@@ -312,10 +314,13 @@ public sealed class GlobalPlayerService : INotifyPropertyChanged, IDisposable
             var dir = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "MEPlayer");
-            System.IO.Directory.CreateDirectory(dir);
             var path = System.IO.Path.Combine(dir, "mpv.log");
             var text = $"{DateTime.Now:HH:mm:ss.fff} [global] {line}{Environment.NewLine}";
-            System.IO.File.AppendAllText(path, text);
+            lock (MpvPlayer.LogFileLock)
+            {
+                System.IO.Directory.CreateDirectory(dir);
+                System.IO.File.AppendAllText(path, text);
+            }
         }
         catch { }
     }
@@ -347,16 +352,9 @@ public sealed class GlobalPlayerService : INotifyPropertyChanged, IDisposable
         MusicCurrentLrcIdx = -1;
 
         var path = MusicPlaylist[index].TryGetValue("path", out var p) ? p : "";
-        // 诊断日志：确认 PlayAt 被调用及路径
-        try
-        {
-            var logPath = System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "MEPlayer", "mpv.log");
-            System.IO.File.AppendAllText(logPath,
-                $"{DateTime.Now:HH:mm:ss.fff} [GlobalPlayer] PlayAt idx={index} path={path}{Environment.NewLine}");
-        }
-        catch { }
+        // 诊断日志：确认 PlayAt 被调用及路径。改用 WriteGlobalLog 复用共享锁，
+        // 避免和其它 MpvPlayer 实例的日志线程并发写同一个文件。
+        WriteGlobalLog($"[GlobalPlayer] PlayAt idx={index} path={path}");
         _musicPlayer.Open(path);
 
         // 加载元数据
@@ -496,11 +494,29 @@ public sealed class GlobalPlayerService : INotifyPropertyChanged, IDisposable
         MusicCurrentLrcIdx = idx;
     }
 
-    /// <summary>停止音乐播放（仅在开始播放视频/IPTV 时调用）。</summary>
+    /// <summary>停止音乐播放（仅在开始播放视频/IPTV 时调用）。
+    /// 【BUG 修复】此前这里只调用了 _musicPlayer.Pause()，音乐播放器对应的 mpv 实例
+    /// 本身并没有被销毁——它的事件循环线程、已经打开的音频设备（openal）会一直
+    /// 存活到用户回到音乐页面或退出程序。这带来两个实际问题：
+    /// 1）用户要求的"切到视频/IPTV 就应该删掉音乐播放实例"没有真正做到，
+    ///    暂停中的音乐播放器仍然占着一个 mpv 实例和一个音频设备；
+    /// 2）更严重的是，IPTV 播放页固定用 ao=openal（详见 IptvPlayerPage.OnLoaded 的注释：
+    ///    "wasapi 会路由到 Senary Audio 虚拟设备（无声），改用 openal"）。如果音乐播放器
+    ///    仍然存活并占用着 openal 设备，随后打开 IPTV 时相当于同一进程内出现第二个
+    ///    openal 实例——libmpv 的 openal 音频输出不支持"可重入"（同一进程多实例
+    ///    同时初始化 openal 会失败或抢占设备），表现正是用户遇到的
+    ///    "先播放音乐、再切到 IPTV，IPTV 没有声音；如果启动就直接进入 IPTV 播放则正常"。
+    /// 这里改为真正 Dispose 掉音乐播放器（而不是仅 Pause），彻底释放 mpv 实例、
+    /// 事件线程和音频设备，需要重新播放音乐时 EnsureMusicPlayer 会重新创建一个。</summary>
     public void StopMusicForOtherPlayback()
     {
         if (!_musicInitialized || _musicPlayer == null) return;
-        try { _musicPlayer.Pause(); } catch { }
+        try { _musicPlayer.Stop(); } catch { }
+        try { _musicPlayer.Dispose(); } catch { }
+        _musicPlayer = null;
+        _musicInitialized = false;
+        MusicIsPlaying = false;
+        MusicIsBuffering = false;
     }
 
     public void Dispose()

@@ -793,6 +793,10 @@ public partial class MusicPlayerPage : UserControl
     }
 
     // ── 诊断：排查"进度条/歌词不动"问题用，节流写日志（每 2 秒最多一条）──
+    // 【BUG 修复】和 MpvPlayer.WriteMpvLog / GlobalPlayerService.WriteGlobalLog 一样，
+    // 这里也在写同一个 mpv.log 文件，此前不带来源标识、也没有和其它写入者共享锁，
+    // 并发写入时可能互相抛 IOException 导致日志静默丢行。加上 [MusicPage] 前缀，
+    // 并复用 MpvPlayer.LogFileLock 序列化写入。
     private DateTime _lastDebugLogAt = DateTime.MinValue;
     private void DebugLogOnce(string line)
     {
@@ -804,9 +808,13 @@ public partial class MusicPlayerPage : UserControl
             var dir = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "MEPlayer");
-            System.IO.Directory.CreateDirectory(dir);
             var path = System.IO.Path.Combine(dir, "mpv.log");
-            System.IO.File.AppendAllText(path, $"{now:HH:mm:ss.fff} {line}{Environment.NewLine}");
+            var text = $"{now:HH:mm:ss.fff} [MusicPage] {line}{Environment.NewLine}";
+            lock (MEPlayer.Player.MpvPlayer.LogFileLock)
+            {
+                System.IO.Directory.CreateDirectory(dir);
+                System.IO.File.AppendAllText(path, text);
+            }
         }
         catch { }
     }

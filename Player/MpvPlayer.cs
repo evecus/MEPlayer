@@ -367,7 +367,15 @@ public sealed class MpvPlayer : IDisposable
     /// 【BUG 修复】原先是 static 方法，多个 MpvPlayer 实例（视频播放器、后台音乐播放器）
     /// 共用同一个日志文件却不带任何实例标识，导致日志交叉、无法区分是谁打的日志——
     /// 排查"进度条不走"问题时误把后台暂停中的音乐播放器的日志当成了视频播放器卡住的证据。
-    /// 现在改为实例方法，每行前缀加上 [mpv#N] 实例编号。</summary>
+    /// 现在改为实例方法，每行前缀加上 [mpv#N] 实例编号。
+    /// 【BUG 修复 2】多个 MpvPlayer 实例的事件循环线程会并发调用 File.AppendAllText
+    /// 写同一个文件，Windows 上极短时间内的并发打开/追加/关闭可能互相抛
+    /// IOException（文件被另一进程/线程占用），之前用空 catch{} 吞掉，会导致日志
+    /// 静默丢行，让"事件循环是否卡住"这类时序相关问题更难排查清楚。这里加一个
+    /// 跨实例共享的静态锁序列化写入，避免丢行（GlobalPlayerService.WriteGlobalLog
+    /// 写同一个文件，也复用同一把锁）。</summary>
+    internal static readonly object LogFileLock = new();
+
     private void WriteMpvLog(string line)
     {
         try
@@ -375,10 +383,13 @@ public sealed class MpvPlayer : IDisposable
             var dir = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "MEPlayer");
-            System.IO.Directory.CreateDirectory(dir);
             var path = System.IO.Path.Combine(dir, "mpv.log");
             var text = $"{DateTime.Now:HH:mm:ss.fff} [mpv#{_instanceId}] {line}{Environment.NewLine}";
-            System.IO.File.AppendAllText(path, text);
+            lock (LogFileLock)
+            {
+                System.IO.Directory.CreateDirectory(dir);
+                System.IO.File.AppendAllText(path, text);
+            }
         }
         catch { }
     }
