@@ -1,0 +1,288 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 默认字体：Microsoft YaHei，与 Flutter 端一致 -->
+    <FontFamily x:Key="App.Font">Microsoft YaHei</FontFamily>
+
+    <!-- 通用字号 -->
+    <system:Double x:Key="App.FontSize.Small" xmlns:system="clr-namespace:System;assembly=mscorlib">12</system:Double>
+    <system:Double x:Key="App.FontSize.Body" xmlns:system="clr-namespace:System;assembly=mscorlib">14</system:Double>
+    <system:Double x:Key="App.FontSize.Title" xmlns:system="clr-namespace:System;assembly=mscorlib">18</system:Double>
+
+    <!-- 圆角半径 -->
+    <CornerRadius x:Key="App.Radius.S">4</CornerRadius>
+    <CornerRadius x:Key="App.Radius.M">8</CornerRadius>
+    <CornerRadius x:Key="App.Radius.L">12</CornerRadius>
+
+    <!-- 默认控件样式 -->
+    <Style TargetType="Window">
+        <Setter Property="FontFamily" Value="{DynamicResource App.Font}"/>
+        <Setter Property="Background" Value="{DynamicResource M3.Background}"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnBackground}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="Auto"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+    </Style>
+
+    <Style TargetType="UserControl">
+        <Setter Property="FontFamily" Value="{DynamicResource App.Font}"/>
+        <Setter Property="Background" Value="{DynamicResource M3.Background}"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnBackground}"/>
+    </Style>
+
+    <Style TargetType="Page">
+        <Setter Property="FontFamily" Value="{DynamicResource App.Font}"/>
+        <Setter Property="Background" Value="{DynamicResource M3.Background}"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnBackground}"/>
+    </Style>
+
+    <Style TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource App.Font}"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnSurface}"/>
+    </Style>
+
+    <Style TargetType="TextBox">
+        <Setter Property="FontFamily" Value="{DynamicResource App.Font}"/>
+        <Setter Property="Background" Value="{DynamicResource M3.Surface}"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnSurface}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource M3.Primary}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource M3.OutlineVariant}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <Style TargetType="Button">
+        <Setter Property="FontFamily" Value="{DynamicResource App.Font}"/>
+        <Setter Property="Background" Value="{DynamicResource M3.SurfaceContainerHighest}"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnSurface}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource M3.OutlineVariant}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource M3.SurfaceVariant}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource M3.OutlineVariant}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- FilledButton（对应 Flutter FilledButton） -->
+    <Style x:Key="FilledButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{DynamicResource M3.Primary}"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnPrimary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource M3.PrimaryContainer}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- IconButton（对应 Flutter IconButton） -->
+    <Style x:Key="IconButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnSurfaceVariant}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="8"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="20">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource M3.SurfaceContainerHighest}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ListViewItem：hover 高亮 -->
+    <Style TargetType="ListViewItem">
+        <Setter Property="FontFamily" Value="{DynamicResource App.Font}"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnSurface}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#22FFFFFF"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource M3.PrimaryContainer}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource M3.OnPrimaryContainer}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ScrollViewer：缩小滚动条 -->
+    <Style TargetType="ScrollViewer">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollViewer">
+                    <Grid>
+                        <ScrollContentPresenter/>
+                        <ScrollBar Name="PART_VerticalScrollBar"
+                                   HorizontalAlignment="Right"
+                                   Width="8"
+                                   Minimum="0" Maximum="{TemplateBinding ScrollableHeight}"
+                                   ViewportSize="{TemplateBinding ViewportHeight}"
+                                   Value="{TemplateBinding VerticalOffset}"
+                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                        <ScrollBar Name="PART_HorizontalScrollBar"
+                                   VerticalAlignment="Bottom"
+                                   Height="8"
+                                   Minimum="0" Maximum="{TemplateBinding ScrollableWidth}"
+                                   ViewportSize="{TemplateBinding ViewportWidth}"
+                                   Value="{TemplateBinding HorizontalOffset}"
+                                   Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ScrollBar 自定义样式 -->
+    <Style TargetType="ScrollBar">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OutlineVariant}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid>
+                        <Border Background="Transparent" CornerRadius="3"/>
+                        <Track Name="PART_Track" IsDirectionReversed="True">
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Border Background="{DynamicResource M3.OutlineVariant}"
+                                                    CornerRadius="3" Opacity="0.7"/>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Slider：圆角轨道 -->
+    <Style TargetType="Slider">
+        <Setter Property="Foreground" Value="{DynamicResource M3.Primary}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid VerticalAlignment="Center" Height="20">
+                        <Border Height="3" VerticalAlignment="Center" CornerRadius="2"
+                                Background="{DynamicResource M3.SurfaceVariant}"/>
+                        <Track Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="Slider.DecreaseLarge">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Height="3" Background="{DynamicResource M3.Primary}" CornerRadius="2"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Ellipse Width="14" Height="14" Fill="{DynamicResource M3.Primary}"/>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="Slider.IncreaseLarge">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Background="Transparent"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- CheckBox -->
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnSurface}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource App.Font}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- RadioButton -->
+    <Style TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnSurface}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource App.Font}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ComboBox -->
+    <Style TargetType="ComboBox">
+        <Setter Property="FontFamily" Value="{DynamicResource App.Font}"/>
+        <Setter Property="Background" Value="{DynamicResource M3.Surface}"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnSurface}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource M3.OutlineVariant}"/>
+    </Style>
+
+    <!-- Border 圆角通用样式 -->
+    <Style x:Key="CardBorder" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource M3.SurfaceContainerHighest}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource M3.OutlineVariant}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="9"/>
+    </Style>
+
+    <!-- Tooltip -->
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="{DynamicResource M3.SurfaceContainerHighest}"/>
+        <Setter Property="Foreground" Value="{DynamicResource M3.OnSurface}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource M3.OutlineVariant}"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+</ResourceDictionary>

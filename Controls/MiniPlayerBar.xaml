@@ -1,0 +1,20 @@
+<UserControl x:Class="MEPlayer.Controls.MiniPlayerBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="64"
+             Background="{DynamicResource M3.SurfaceContainerHigh}">
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶部分隔线 -->
+        <Border Grid.Row="0" Background="{DynamicResource M3.OutlineVariant}" Opacity="0.5"/>
+
+        <!-- 内容区由 code-behind 动态填充 -->
+        <Grid Grid.Row="1" x:Name="ContentHost">
+            <!-- video/iptv/music 三种内容中的一种 -->
+        </Grid>
+    </Grid>
+</UserControl>

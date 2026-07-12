@@ -1,0 +1,7 @@
+<UserControl x:Class="MEPlayer.Pages.SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer Padding="24" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel x:Name="RootPanel" MaxWidth="720"/>
+    </ScrollViewer>
+</UserControl>

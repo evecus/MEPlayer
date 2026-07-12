@@ -1,0 +1,77 @@
+name: test
+
+# 触发方式：
+#   1. push 一个 v 开头的 tag（如 v1.0.0）—— 会构建并自动创建 GitHub Release，附带压缩包
+#   2. 手动在 Actions 页面点击 "Run workflow" —— 只构建并上传 Artifact，不发布 Release
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 需要写权限才能创建 Release 并上传附件
+
+env:
+  DOTNET_VERSION: "8.0.x"
+  PROJECT_PATH: "MEPlayerWindows.csproj"
+  PUBLISH_DIR: "publish"
+  # mpv 官方 Windows 动态库(libmpv-2.dll)的构建仓库
+  MPV_REPO: "shinchiro/mpv-winbuild-cmake"
+  # 资产文件名匹配关键字：x86_64-v3 版本性能更好；如需兼容更老 CPU 可改成 "mpv-dev-x86_64-2"
+  MPV_ASSET_PATTERN: "mpv-dev-x86_64-v3-"
+  # libmpv-2.dll 在仓库里的缓存压缩包路径（第一次下载后会自动提交到这里）
+  MPV_CACHE_ZIP: "deps/libmpv-2.dll.zip"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: 检出源码
+        uses: actions/checkout@v4
+
+      - name: 安装 .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 还原依赖
+        run: dotnet restore "${{ env.PROJECT_PATH }}"
+
+
+      # ---------- 编译发布 ----------
+      - name: 发布 (win-x64, framework-dependent)
+        run: >
+          dotnet publish "${{ env.PROJECT_PATH }}"
+          -c Release
+          -r win-x64
+          --self-contained false
+          -o "${{ env.PUBLISH_DIR }}"
+
+
+      # ---------- 打包 ----------
+      - name: 生成版本号
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -like "refs/tags/*") {
+            $ver = $env:GITHUB_REF -replace "refs/tags/", ""
+          } else {
+            $ver = "dev-test"
+          }
+          echo "version=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: 打包为 zip
+        shell: pwsh
+        run: |
+          $zipName = "MEPlayer-${{ steps.version.outputs.version }}-nompv-win-x64.zip"
+          Compress-Archive -Path "${{ env.PUBLISH_DIR }}/*" -DestinationPath $zipName -Force
+          echo "zip_name=$zipName" >> $env:GITHUB_ENV
+
+      # ---------- 打 tag 时自动发布 Release ----------
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: test
+          files: ${{ env.zip_name }}
+          name: MEPlayer test
+          draft: false
+          prerelease: false

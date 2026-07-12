@@ -1,0 +1,245 @@
+<UserControl x:Class="MEPlayer.Pages.IptvPlayerPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="Black"
+      Focusable="True"
+      PreviewKeyDown="Page_PreviewKeyDown">
+    <UserControl.Resources>
+        <!-- 覆盖层图标按钮：透明背景 + 白色图标，悬停高亮（对应 Flutter IconButton on dark） -->
+        <Style x:Key="OverlayIconButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="20">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#33FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 覆盖层音量滑块：白色轨道 + 白色滑块（对应 Flutter 白色 SliderTheme） -->
+        <Style x:Key="OverlaySlider" TargetType="Slider">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid VerticalAlignment="Center" Height="20">
+                            <Border Height="2" VerticalAlignment="Center" CornerRadius="1" Background="#55FFFFFF"/>
+                            <Track Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="2" Background="White" CornerRadius="1"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="10" Height="10" Fill="White"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid x:Name="RootGrid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="7*" x:Name="VideoColumn"/>
+            <ColumnDefinition Width="360" x:Name="PanelColumn"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ══ 视频区（flex 7）══ -->
+        <!-- 视频区改为单行铺满：MpvVideoHost 是原生子窗口（HwndHost），存在 WPF
+             Airspace 问题——同一 Grid 内的普通 WPF 兄弟元素无论 Z 顺序如何都会被
+             原生子窗口盖住而不可见。之前用"顶栏/视频/底栏"三行结构规避了这个问题，
+             但代价是顶栏/底栏隐藏时仍占据 Auto 行高，视频永远无法真正铺满整个区域
+             （全屏时仍有固定的黑条，且控制条无法真正隐藏）。
+             现在改为：视频区 100% 铺满，顶栏/底栏/缓冲指示器放进独立的 Popup
+             （见下方 ControlsPopup / BufferingPopup），Popup 创建
+             自己的顶层原生窗口，天然不受 Airspace 限制，可以正确叠加显示在视频画面
+             之上，且隐藏时对视频区域尺寸没有任何影响，从而实现真正的全屏 + 悬浮控制条。 -->
+        <Grid Grid.Column="0" x:Name="VideoOuterGrid" Background="Black">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 视频区（MpvVideoHost 在代码后置中 Insert(0) 到此 Grid） -->
+            <Grid Grid.Row="0" x:Name="VideoAreaGrid" Background="Black" ClipToBounds="True"
+                  MouseMove="VideoArea_MouseMove">
+            </Grid>
+        </Grid>
+
+        <!-- ── 缓冲指示器 Popup（独立顶层窗口，始终居中，独立于控制条显隐，点击穿透）── -->
+        <Popup x:Name="BufferingPopup" Placement="Relative" PlacementTarget="{Binding ElementName=VideoAreaGrid}"
+               AllowsTransparency="True" IsOpen="False" StaysOpen="True">
+            <Grid x:Name="BufferingPopupRoot" Width="1" Height="1" Background="Transparent">
+                <Border x:Name="BufferingIndicator" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Visibility="Collapsed" Background="#88000000" CornerRadius="10" Padding="20,16">
+                    <StackPanel>
+                        <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="30" Foreground="White"
+                                   HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                            <TextBlock.RenderTransform>
+                                <RotateTransform x:Name="BufferingRotate" Angle="0"/>
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+                        <TextBlock Text="缓冲中…" Foreground="White" FontSize="12" Margin="0,8,0,0"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Popup>
+
+        <!-- ── 顶栏 + 底栏 Popup（独立顶层窗口，叠加在视频画面之上）── -->
+        <Popup x:Name="ControlsPopup" Placement="Relative" PlacementTarget="{Binding ElementName=VideoAreaGrid}"
+               AllowsTransparency="True" IsOpen="False" StaysOpen="True">
+            <Grid x:Name="ControlsPopupRoot" Width="1" Height="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- ── 顶栏：返回 + 频道名 + LIVE 徽章 ── -->
+                <Grid Grid.Row="0" x:Name="TopBarGrid" Height="36" Background="#DD000000">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="BackBtn" Style="{StaticResource OverlayIconButton}" Margin="4,0,0,0" Padding="6"
+                            ToolTip="返回" Click="BackBtn_Click">
+                        <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="15" Foreground="White"/>
+                    </Button>
+                    <TextBlock x:Name="ChannelNameText" Grid.Column="1" VerticalAlignment="Center"
+                               Margin="4,0,10,0" Foreground="White" FontSize="12" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"/>
+                    <Border Grid.Column="2" Background="Red" CornerRadius="3" Padding="6,2"
+                            Margin="0,0,10,0" VerticalAlignment="Center">
+                        <TextBlock Text="LIVE" Foreground="White" FontSize="9" FontWeight="Bold"/>
+                    </Border>
+                </Grid>
+
+                <!-- ── 底栏：播放/暂停 + 音量 + 全屏 ── -->
+                <Grid Grid.Row="2" x:Name="BottomBarGrid" Height="38" Background="#DD000000">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="72"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="PlayPauseBtn" Style="{StaticResource OverlayIconButton}" Margin="10,0,0,0" Padding="6"
+                            ToolTip="播放/暂停" Click="PlayPauseBtn_Click">
+                        <TextBlock x:Name="PlayPauseIcon" Text="&#xE768;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="18" Foreground="White"/>
+                    </Button>
+                    <TextBlock Grid.Column="1" Text="&#xE767;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="#B3FFFFFF" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                    <Slider x:Name="VolumeSlider" Grid.Column="2" Style="{StaticResource OverlaySlider}"
+                            VerticalAlignment="Center" Margin="6,0,6,0" IsMoveToPointEnabled="True"
+                            Minimum="0" Maximum="100" Value="100"
+                            ValueChanged="VolumeSlider_ValueChanged"/>
+                    <Button x:Name="FullscreenBtn" Grid.Column="4" Style="{StaticResource OverlayIconButton}"
+                            Margin="0,0,10,0" Padding="6" ToolTip="全屏" Click="FullscreenBtn_Click">
+                        <TextBlock x:Name="FullscreenIcon" Text="&#xE740;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="17" Foreground="White"/>
+                    </Button>
+                </Grid>
+            </Grid>
+        </Popup>
+
+        <!-- ══ 右侧频道面板（360px）══ -->
+        <Border Grid.Column="1" x:Name="ChannelPanelBorder" Background="{DynamicResource M3.Background}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="48"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 标题栏 -->
+                <Border Grid.Row="0" Padding="16,0" BorderBrush="{DynamicResource M3.OutlineVariant}"
+                        BorderThickness="0,0,0,1" Opacity="1">
+                    <TextBlock x:Name="PanelTitleText" Text="IPTV" VerticalAlignment="Center"
+                               FontSize="16" FontWeight="Bold"
+                               Foreground="{DynamicResource M3.OnBackground}" TextTrimming="CharacterEllipsis"/>
+                </Border>
+
+                <!-- 三列正文：分组(80) | 频道(flex) | 源(72) -->
+                <Grid Grid.Row="1" x:Name="PanelBodyGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="1"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="1"/>
+                        <ColumnDefinition Width="72"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 列1：分组 -->
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="GroupPanel" Margin="0,4"/>
+                    </ScrollViewer>
+
+                    <Border Grid.Column="1" Background="{DynamicResource M3.OutlineVariant}" Opacity="0.5"/>
+
+                    <!-- 列2：频道 -->
+                    <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="ChannelPanel" Margin="0,4"/>
+                    </ScrollViewer>
+
+                    <Border Grid.Column="3" Background="{DynamicResource M3.OutlineVariant}" Opacity="0.5"/>
+
+                    <!-- 列3：源 -->
+                    <ScrollViewer Grid.Column="4" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="StreamPanel" Margin="0,6"/>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- 空态/加载态覆盖层 -->
+                <Border Grid.Row="1" x:Name="EmptyStateBorder" Visibility="Collapsed"
+                        Background="{DynamicResource M3.Background}">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets" FontSize="48"
+                                   Foreground="{DynamicResource M3.OnSurfaceVariant}" Opacity="0.5"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="EmptyStateText" Text="暂无频道" FontSize="13"
+                                   Foreground="{DynamicResource M3.OnSurfaceVariant}" Margin="0,12,0,0"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

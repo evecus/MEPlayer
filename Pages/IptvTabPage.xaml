@@ -1,0 +1,72 @@
+<UserControl x:Class="MEPlayer.Pages.IptvTabPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <!-- 源卡片样式（对应 Flutter _SourceCard）：hover 时背景变化 + 边框高亮 + 阴影 -->
+        <Style x:Key="SourceCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource M3.SurfaceContainerHigh}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource M3.OutlineVariant}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Effect" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource M3.SurfaceContainerHighest}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource M3.Primary}"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.18" Color="Black"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶栏：标题 + 导入按钮（对应 Flutter 顶栏） -->
+        <Grid Grid.Row="0" Margin="24,20,24,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="IPTV 源管理" FontSize="18" FontWeight="SemiBold"
+                       VerticalAlignment="Center"/>
+            <Button Grid.Column="1" x:Name="ImportButton" Style="{StaticResource FilledButton}"
+                    Padding="16,8" Click="ImportButton_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               VerticalAlignment="Center" Foreground="{DynamicResource M3.OnPrimary}"/>
+                    <TextBlock Text="导入" Margin="6,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource M3.OnPrimary}"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- 分隔线 -->
+        <Border Grid.Row="1" Height="1" Background="{DynamicResource M3.OutlineVariant}" Margin="24,16,24,0"/>
+
+        <!-- 源卡片网格（WrapPanel 简化实现 Flutter GridView，宽度在 code-behind 按列数自适应） -->
+        <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <WrapPanel x:Name="CardsPanel" Orientation="Horizontal" Margin="24,16,24,24"/>
+        </ScrollViewer>
+
+        <!-- 空状态（对应 Flutter 空列表占位） -->
+        <StackPanel x:Name="EmptyState" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+            <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets" FontSize="72" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource M3.OnSurfaceVariant}" Opacity="0.4"/>
+            <TextBlock Text="暂无 IPTV 源" FontSize="16" FontWeight="Medium" HorizontalAlignment="Center"
+                       Margin="0,16,0,0" Foreground="{DynamicResource M3.OnSurfaceVariant}"/>
+            <TextBlock Text="点击右上角「导入」按钮添加源" FontSize="13" HorizontalAlignment="Center"
+                       Margin="0,8,0,0" Foreground="{DynamicResource M3.OnSurfaceVariant}" Opacity="0.6"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
