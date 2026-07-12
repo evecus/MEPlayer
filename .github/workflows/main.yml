@@ -102,7 +102,7 @@ jobs:
           if ($env:GITHUB_REF -like "refs/tags/*") {
             $ver = $env:GITHUB_REF -replace "refs/tags/", ""
           } else {
-            $ver = "-test"
+            $ver = "test"
           }
           echo "version=$ver" >> $env:GITHUB_OUTPUT
 
