@@ -51,7 +51,7 @@ jobs:
           if ($env:GITHUB_REF -like "refs/tags/*") {
             $ver = $env:GITHUB_REF -replace "refs/tags/", ""
           } else {
-            $ver = "dev-test"
+            $ver = "test"
           }
           echo "version=$ver" >> $env:GITHUB_OUTPUT
 
@@ -68,5 +68,6 @@ jobs:
         with:
           tag_name: test
           name: MEPlayer test
+          files: ${{ env.zip_name }}
           draft: false
           prerelease: true
