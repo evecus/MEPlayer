@@ -1,8 +1,4 @@
-name: test
-
-# 触发方式：
-#   1. push 一个 v 开头的 tag（如 v1.0.0）—— 会构建并自动创建 GitHub Release，附带压缩包
-#   2. 手动在 Actions 页面点击 "Run workflow" —— 只构建并上传 Artifact，不发布 Release
+name: test-windows
 on:
   workflow_dispatch:
 
@@ -62,7 +58,7 @@ jobs:
       - name: 打包为 zip
         shell: pwsh
         run: |
-          $zipName = "MEPlayer-${{ steps.version.outputs.version }}-nompv-win-x64.zip"
+          $zipName = "MEPlayer-${{ steps.version.outputs.version }}-nompv-windows-x64.zip"
           Compress-Archive -Path "${{ env.PUBLISH_DIR }}/*" -DestinationPath $zipName -Force
           echo "zip_name=$zipName" >> $env:GITHUB_ENV
 
@@ -71,7 +67,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: test
-          files: ${{ env.zip_name }}
           name: MEPlayer test
           draft: false
-          prerelease: false
+          prerelease: true
